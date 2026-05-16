@@ -378,37 +378,12 @@
   .tg-week tr.total td { background: var(--bg); font-weight: 700; border-top: 2px solid var(--line); }
   @media print { .tg-card { display: none !important; } }
 
-  /* Two-column Today layout for wide screens */
-  .today-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-  .today-grid > .today-main, .today-grid > .today-side { min-width: 0; }
-  .today-grid.cc-collapsed { grid-template-columns: minmax(0, 1fr); }
-  .today-grid.cc-collapsed .today-side { display: none; }
-  .cc-expand-btn {
-    background: var(--dark); color: #fff; border: 0; cursor: pointer;
-    padding: 10px 14px; border-radius: 10px; font-weight: 700; font-size: 12.5px;
-    display: none; align-items: center; gap: 8px; margin-bottom: 14px;
-    box-shadow: var(--shadow); margin-left: auto;
-  }
-  .cc-expand-btn:hover { background: #000; }
-  .today-grid.cc-collapsed ~ .cc-expand-btn,
-  body .today-grid.cc-collapsed .cc-expand-btn-inline { display: inline-flex; }
-  /* When collapsed, push the expand button to the right edge of the main column */
-  .today-grid.cc-collapsed .today-main { display: flex; flex-direction: column; align-items: stretch; }
-  .today-grid.cc-collapsed .cc-expand-btn-inline { align-self: flex-end; }
-  /* Collapse button inside the cc-card header */
-  .cc-hd .cc-collapse-btn {
-    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
-    color: #fff; height: 32px; padding: 0 12px; border-radius: 8px;
-    cursor: pointer; font-size: 11.5px; font-weight: 700;
-    letter-spacing: .4px; text-transform: uppercase; white-space: nowrap;
-    display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
-  }
-  .cc-hd .cc-collapse-btn:hover { background: rgba(255,255,255,.28); }
+  /* Collapse button is no longer used (cycle count is its own tab now), keep style as no-op safety */
+  .cc-hd .cc-collapse-btn { display: none; }
   .cc-hd-row { display: flex; align-items: flex-start; gap: 10px; }
-  @media (max-width: 880px) { .today-grid { grid-template-columns: 1fr; } }
 
-  /* Cycle Count card (right sidebar, wider) — doubled height so the SKU table shows ~40+ rows */
-  .cc-card { display: flex; flex-direction: column; min-height: 1640px; height: max(1640px, calc(200vh - 180px)); overflow: hidden; }
+  /* Cycle Count card — its own tab now, full width, tall SKU table */
+  .cc-card { display: flex; flex-direction: column; min-height: calc(100vh - 140px); height: auto; overflow: hidden; }
 
   /* Compact "what's expected today" — collapsible */
   .cc-steps { padding: 0 16px; }
@@ -622,11 +597,10 @@
   /* Print: only the cycle count card is printed */
   @media print {
     body { background: white; }
-    header.app, nav.tabs, .view:not(#v-today), .card:not(#card-cyclecount), .reminder, .toast, #confetti-canvas, .today-main, .tg-card { display: none !important; }
-    .today-grid { display: block !important; }
-    .today-side { width: 100% !important; }
-    .cc-card { position: static; max-height: none; box-shadow: none; border: 1px solid #ccc; }
-    .cc-card .cc-skus { overflow: visible !important; max-height: none !important; }
+    header.app, nav.tabs, .view:not(#v-cyclecount), .card:not(#card-cyclecount), .reminder, .toast, #confetti-canvas, .tg-card { display: none !important; }
+    #v-cyclecount { display: block !important; }
+    .cc-card { position: static; max-height: none; min-height: 0; height: auto; box-shadow: none; border: 1px solid #ccc; overflow: visible; }
+    .cc-card .cc-skus { overflow: visible !important; max-height: none !important; min-height: 0 !important; }
     .cc-actions, .cc-note { display: none !important; }
   }
 
@@ -723,6 +697,7 @@
   </div>
   <nav class="tabs" id="tabs">
     <button data-tab="today" class="active">Today</button>
+    <button data-tab="cyclecount">Cycle Count</button>
     <button data-tab="log">Log</button>
     <button data-tab="history">History</button>
     <button data-tab="settings">Settings</button>
@@ -737,10 +712,6 @@
     <div id="reminder-zone"></div>
 
     <div class="tg-card" id="card-targets" style="display:none;"></div>
-
-    <div class="today-grid">
-    <div class="today-main">
-    <button class="cc-expand-btn cc-expand-btn-inline" id="cc-expand-btn">📋 Show Cycle Count</button>
 
     <div class="card" style="margin-bottom: 16px;">
       <div class="hd2">
@@ -806,14 +777,13 @@
       <div id="list-closing"></div>
     </div>
 
-    </div><!-- /today-main -->
-    <aside class="today-side">
-      <div class="card cc-card" id="card-cyclecount">
-        <!-- Filled in by renderCycleCountCard() -->
-      </div>
-    </aside>
-    </div><!-- /today-grid -->
+  </section>
 
+  <!-- ============ CYCLE COUNT ============ -->
+  <section class="view" id="v-cyclecount">
+    <div class="card cc-card" id="card-cyclecount">
+      <!-- Filled in by renderCycleCountCard() -->
+    </div>
   </section>
 
   <!-- ============ LOG ============ -->
@@ -1539,6 +1509,7 @@ document.getElementById('tabs').addEventListener('click', e => {
   if (b.dataset.tab === 'history') renderHistory();
   if (b.dataset.tab === 'settings') renderSettings();
   if (b.dataset.tab === 'log') renderLog();
+  if (b.dataset.tab === 'cyclecount' && typeof renderCycleCountCard === 'function') renderCycleCountCard();
 });
 
 // ---------- Initials & avatars ----------
@@ -1898,8 +1869,7 @@ function renderCycleCountCard() {
             <div class="kicker">WEEKEND</div>
             <h3>No cycle count today</h3>
           </div>
-          <button class="cc-collapse-btn" data-act="collapse-cc" title="Collapse cycle count">Collapse cycle count</button>
-        </div>
+                  </div>
       </div>
       <div class="cc-nav">
         <button data-act="prev-day" title="Browse previous batch">◀</button>
@@ -2033,8 +2003,7 @@ function renderCycleCountCard() {
           <h3>${full.set_title || (full.cat + ' — Batch ' + full.b)}${isWeekend && offset === 0 ? ' (Friday)' : ''}</h3>
           <div class="kicker" style="opacity:.65; margin-top:4px;">${full.cat} · Batch ${full.b}</div>
         </div>
-        <button class="cc-collapse-btn" data-act="collapse-cc" title="Collapse cycle count">Collapse cycle count</button>
-      </div>
+              </div>
     </div>
     <div class="cc-nav">
       <button data-act="prev-day" title="Previous batch" ${batch <= 1 ? 'disabled' : ''}>◀</button>
