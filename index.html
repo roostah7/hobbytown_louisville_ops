@@ -387,11 +387,14 @@
     background: var(--dark); color: #fff; border: 0; cursor: pointer;
     padding: 10px 14px; border-radius: 10px; font-weight: 700; font-size: 12.5px;
     display: none; align-items: center; gap: 8px; margin-bottom: 14px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow); margin-left: auto;
   }
   .cc-expand-btn:hover { background: #000; }
   .today-grid.cc-collapsed ~ .cc-expand-btn,
   body .today-grid.cc-collapsed .cc-expand-btn-inline { display: inline-flex; }
+  /* When collapsed, push the expand button to the right edge of the main column */
+  .today-grid.cc-collapsed .today-main { display: flex; flex-direction: column; align-items: stretch; }
+  .today-grid.cc-collapsed .cc-expand-btn-inline { align-self: flex-end; }
   /* Collapse button inside the cc-card header */
   .cc-hd .cc-collapse-btn {
     background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
@@ -405,8 +408,7 @@
   @media (max-width: 880px) { .today-grid { grid-template-columns: 1fr; } }
 
   /* Cycle Count card (right sidebar, wider) */
-  .cc-card { position: sticky; top: 70px; max-height: calc(100vh - 90px); display: flex; flex-direction: column; min-height: 700px; }
-  .cc-skus { flex: 1; min-height: 520px; max-height: none; }
+  .cc-card { position: sticky; top: 70px; height: calc(100vh - 90px); max-height: calc(100vh - 90px); display: flex; flex-direction: column; min-height: 820px; overflow: hidden; }
 
   /* Compact "what's expected today" — collapsible */
   .cc-steps { padding: 0 16px; }
@@ -593,7 +595,7 @@
   .cc-steps ol li::marker { color: var(--red); font-weight: 800; }
   .cc-actions { padding: 10px 16px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); }
   .cc-actions .btn { flex: 1 1 0; min-width: 0; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
-  .cc-skus { flex: 1; min-height: 200px; overflow: auto; border-top: 1px solid var(--line); }
+  .cc-skus { flex: 1 1 0; min-height: 600px; overflow: auto; border-top: 1px solid var(--line); }
   .cc-skus table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .cc-skus th, .cc-skus td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; }
   .cc-skus th { position: sticky; top: 0; background: var(--card); color: var(--muted); font-size: 10.5px; letter-spacing: .4px; text-transform: uppercase; font-weight: 700; z-index: 1; }
@@ -1815,7 +1817,20 @@ function renderTargetsCard() {
     return;
   }
 
-  // MANAGER view: just the Break-even target, single tile, no week table
+  // MANAGER view: Break-even target single tile, with "Show full week" toggle (break-even only)
+  const isOpenMgr = card.classList.contains('week-open');
+  const wtMgr = SALES_TARGETS_META.weekTotal;
+  const rowsMgr = Object.keys(SALES_TARGETS).map(k => {
+    const r = SALES_TARGETS[k]; const today = (+k === dow);
+    return `<tr class="${today ? 'today' : ''}">
+      <td>${r.day}${today ? ' <span style="color:var(--muted); font-size:10.5px;">(today)</span>' : ''}</td>
+      <td class="num">${fmtUSD(r.breakEven)}</td>
+    </tr>`;
+  }).join('');
+  const totalRowMgr = `<tr class="total">
+    <td>Weekly total</td>
+    <td class="num">${fmtUSD(wtMgr.breakEven)}</td>
+  </tr>`;
   card.innerHTML = `
     <div class="tg-hd">
       <div>
@@ -1832,7 +1847,16 @@ function renderTargetsCard() {
     </div>
     <div class="tg-foot">
       <span>Based on ${t.samples} actual ${t.day}s &middot; ${SALES_TARGETS_META.sampleStart}–${SALES_TARGETS_META.sampleEnd}</span>
+      <button data-act="toggle-week">${isOpenMgr ? 'Hide full week ▲' : 'Show full week ▼'}</button>
+    </div>
+    <div class="tg-week ${isOpenMgr ? 'open' : ''}">
+      <table>
+        <thead><tr><th>Day</th><th class="num">Break-even</th></tr></thead>
+        <tbody>${rowsMgr}${totalRowMgr}</tbody>
+      </table>
     </div>`;
+  const btnMgr = card.querySelector('[data-act="toggle-week"]');
+  if (btnMgr) btnMgr.onclick = () => { card.classList.toggle('week-open'); renderTargetsCard(); };
 }
 
 // ---------- Cycle Count Card ----------
