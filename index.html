@@ -379,8 +379,9 @@
   @media print { .tg-card { display: none !important; } }
 
   /* Two-column Today layout for wide screens */
-  .today-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-  .today-grid.cc-collapsed { grid-template-columns: 1fr; }
+  .today-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .today-grid > .today-main, .today-grid > .today-side { min-width: 0; }
+  .today-grid.cc-collapsed { grid-template-columns: minmax(0, 1fr); }
   .today-grid.cc-collapsed .today-side { display: none; }
   .cc-expand-btn {
     background: var(--dark); color: #fff; border: 0; cursor: pointer;
@@ -394,9 +395,10 @@
   /* Collapse button inside the cc-card header */
   .cc-hd .cc-collapse-btn {
     background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
-    color: #fff; width: 32px; height: 32px; border-radius: 8px;
-    cursor: pointer; font-size: 14px; font-weight: 700;
-    display: grid; place-items: center; margin-left: auto;
+    color: #fff; height: 32px; padding: 0 12px; border-radius: 8px;
+    cursor: pointer; font-size: 11.5px; font-weight: 700;
+    letter-spacing: .4px; text-transform: uppercase; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
   }
   .cc-hd .cc-collapse-btn:hover { background: rgba(255,255,255,.28); }
   .cc-hd-row { display: flex; align-items: flex-start; gap: 10px; }
@@ -590,7 +592,7 @@
   .cc-steps ol { margin: 0; padding-left: 18px; color: var(--ink); font-size: 13px; line-height: 1.55; }
   .cc-steps ol li::marker { color: var(--red); font-weight: 800; }
   .cc-actions { padding: 10px 16px; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); }
-  .cc-actions .btn { flex: 1; min-width: 120px; }
+  .cc-actions .btn { flex: 1 1 0; min-width: 0; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
   .cc-skus { flex: 1; min-height: 200px; overflow: auto; border-top: 1px solid var(--line); }
   .cc-skus table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .cc-skus th, .cc-skus td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; }
@@ -1872,7 +1874,7 @@ function renderCycleCountCard() {
             <div class="kicker">WEEKEND</div>
             <h3>No cycle count today</h3>
           </div>
-          <button class="cc-collapse-btn" data-act="collapse-cc" title="Collapse cycle count">▶</button>
+          <button class="cc-collapse-btn" data-act="collapse-cc" title="Collapse cycle count">Collapse cycle count</button>
         </div>
       </div>
       <div class="cc-nav">
@@ -2007,7 +2009,7 @@ function renderCycleCountCard() {
           <h3>${full.set_title || (full.cat + ' — Batch ' + full.b)}${isWeekend && offset === 0 ? ' (Friday)' : ''}</h3>
           <div class="kicker" style="opacity:.65; margin-top:4px;">${full.cat} · Batch ${full.b}</div>
         </div>
-        <button class="cc-collapse-btn" data-act="collapse-cc" title="Collapse cycle count">▶</button>
+        <button class="cc-collapse-btn" data-act="collapse-cc" title="Collapse cycle count">Collapse cycle count</button>
       </div>
     </div>
     <div class="cc-nav">
