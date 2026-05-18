@@ -1692,12 +1692,26 @@ function toggle(section, taskId, el) {
     return;
   }
   const day = ensureDay();
+  const wasUnchecked = !day[section][taskId];
   if (day[section][taskId]) {
     delete day[section][taskId];
   } else {
     day[section][taskId] = { user: state.currentUserId, ts: Date.now() };
   }
   save();
+
+  // Per-task celebration for mid-shift items — confetti burst right from
+  // the checkbox so it feels like the box itself launched it.
+  if (wasUnchecked && section === 'midshift') {
+    const rect = el.getBoundingClientRect();
+    confetti({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+      count: 40
+    });
+    playChime([659.25, 880.0]);
+  }
+
   renderChecklist(section);
   // Check section completion
   const total = state.tasks[section].length;
