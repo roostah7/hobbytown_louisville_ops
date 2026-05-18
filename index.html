@@ -1713,11 +1713,14 @@ function toggle(section, taskId, el) {
   }
 
   renderChecklist(section);
-  // Check section completion
-  const total = state.tasks[section].length;
-  const done = Object.keys(day[section]).length;
-  if (done === total && total > 0) {
-    const tag = section + '-' + todayKey();
+  // Check section completion — based on the VISIBLE task set for the
+  // current user (so a manager in "Mine" mode also gets the celebration
+  // when their personal set is done, not just at all-roles completion).
+  const vis = visibleTasks(section);
+  const visIds = new Set(vis.map(t => t.id));
+  const visDone = Object.keys(day[section] || {}).filter(id => visIds.has(id)).length;
+  if (visDone === vis.length && vis.length > 0) {
+    const tag = section + '-' + todayKey() + (canManage() && state.prefs.viewAllRoles ? '-all' : '-mine');
     if (!day.completedSections.includes(tag)) {
       day.completedSections.push(tag);
       save();
@@ -2216,9 +2219,10 @@ function celebrateSection(section) {
       setTimeout(() => freeCellBounce({ count: 80 }), 1100);
     }, 600);
   } else {
-    // Smaller bounce + a couple of fireworks for single-section completion
-    fireworks({ bursts: 3 });
-    setTimeout(() => freeCellBounce({ count: 25 }), 350);
+    // Single-section completion (opening / midshift / closing) — fireworks
+    // then the HobbyTown logos bouncing across the screen FreeCell-style.
+    fireworks({ bursts: 4 });
+    setTimeout(() => freeCellBounce({ count: 40 }), 350);
   }
 }
 
