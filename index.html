@@ -1349,8 +1349,9 @@ function save() {
     console.warn('save() failed:', e);
   }
   // Push the shared portion of state up to Supabase (debounced). Suppressed
-  // while we're applying a remote update so we don't echo it straight back.
-  if (typeof schedulePush === 'function' && !window.__applyingRemote) schedulePush();
+  // until the sync layer has initialized (early migration saves run before
+  // the sync variables exist) and while applying a remote update.
+  if (window.__syncReady && !window.__applyingRemote && typeof schedulePush === 'function') schedulePush();
 }
 let state = load() || {
   people: DEFAULT_PEOPLE,
@@ -2742,6 +2743,8 @@ const MY_CLIENT_ID = Math.random().toString(36).slice(2);
 let lastRemoteUpdatedAt = null;   // last updated_at we've applied
 let pushTimer = null;
 let syncOnline = false;
+// Sync variables now exist — safe for save() to schedule cloud pushes.
+window.__syncReady = true;
 
 function sharedSnapshot() {
   const out = { _writer: MY_CLIENT_ID, _writtenAt: Date.now() };
